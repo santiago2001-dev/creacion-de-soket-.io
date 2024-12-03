@@ -1,10 +1,12 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
+
 const conexion = mysql.createConnection({
-    host: "localhost",
-    password :"",
-    user: "root",
-    port: "3306",
-    database :"socket"
+    host: process.env.HOST_DB,
+    password :process.env.PASS_DB,
+    user: process.env.USER_DB,
+    port: process.env.PORT_DB,
+    database :process.env.DB
+    
 })
 
 conexion.connect((error)=>{
@@ -14,4 +16,9 @@ conexion.connect((error)=>{
         console.log('conexiona a base exitosa');
     }
 })
+
 module.exports = conexion;
+
+
+
+
