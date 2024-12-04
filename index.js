@@ -7,11 +7,14 @@ const server = http.createServer(app);
 
 const { Server } = require("socket.io");
 const conexion = require("./database/db");
-const { obtenerEmpleadoPorID } = require("./controllers/EmpleadoController");
+const {
+  obtenerEmpleadoPorID,
+  crearEmpleado,
+  eliminarEmpleado,
+  crearPais,
+} = require("./controllers/EmpleadoController");
 
 const io = new Server(server);
-
-
 
 io.on("connection", (socket) => {
   console.log("Usuario conectado");
@@ -21,13 +24,12 @@ io.on("connection", (socket) => {
 
   socket.on("oninfo", async (data) => {
     try {
-      console.log(data);
       switch (data[0]) {
         case "listarEmpleados":
           // Actualiza el estado actual
           estadoActual = "esperandoDocumento";
           socket.emit("emitinfo", [
-            "Por favor, envía el documento del empleado a listaaaar ",
+            "Por favor, envía el documento del empleado a listar ",
             estadoActual,
           ]);
           break;
@@ -44,7 +46,7 @@ io.on("connection", (socket) => {
           // Actualiza el estado actual
           estadoActual = "esperandoDocumentoCrear";
           socket.emit("emitinfo", [
-            "Por favor, envía el documento del empleado a crear ",
+            "Por favor, envía el datos del empleado a cargar seperados por ,  ",
             estadoActual,
           ]);
           break;
@@ -52,18 +54,58 @@ io.on("connection", (socket) => {
         case "esperandoDocumentoCrear":
           // Actualiza el estado actual
           estadoActual = null;
+          let response = await crearEmpleado(data[1]);
+          socket.emit("emitinfo", [response, estadoActual]);
+          break;
+
+        case "eliminarEmpleado":
+          // Actualiza el estado actual
+          estadoActual = "esperandoDocumentoElmin";
           socket.emit("emitinfo", [
-            "Por favor, envía el documento del empleado a crear ",
+            "Por favor, envía el documento del empleado a eliminar ",
             estadoActual,
           ]);
           break;
+
+        case "eliminarEmpleado":
+          // Actualiza el estado actual
+          estadoActual = "esperandoDocumentoElmin";
+          socket.emit("emitinfo", [
+            "Por favor, envía el documento del empleado a eliminar ",
+            estadoActual,
+          ]);
+          break;
+
+        case "esperandoDocumentoElmin":
+          // Actualiza el estado actual
+          estadoActual = null;
+          let responseelm = await eliminarEmpleado(data[1]);
+          socket.emit("emitinfo", [responseelm, estadoActual]);
+          break;
+
+
+          case "crearPais":
+            // Actualiza el estado actual
+            estadoActual = "esperandoPaisoCrear";
+            socket.emit("emitinfo", [
+              "Por favor, envía el datos del pais a cargar seperados por ,  ",
+              estadoActual,
+            ]);
+            break;
+  
+          case "esperandoPaisoCrear":
+            // Actualiza el estado actual
+            estadoActual = null;
+            let responsePais = await crearPais(data[1]);
+            socket.emit("emitinfo", [responsePais, estadoActual]);
+            break;
 
         default:
           socket.emit("info", "Acción no válida");
           break;
       }
     } catch (error) {
-      console.error("Error en la operación:", error.message);
+      console.error("Error en la operación:", error);
       socket.emit("info", "Error interno del servidor");
     }
   });
@@ -100,8 +142,6 @@ io.on("connection", (socket) => {
     console.log("Usuario desconectado");
   });
 });
-
-
 
 server.listen(3000, () => {
   console.log("Listening on http://localhost:3000");
